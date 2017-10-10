@@ -7,13 +7,6 @@ export default mainDocsTraverser(node) ->
       node.children.unshift(makeHeadingAnchor(node.properties.id))
       break
 
-    case 'pre':
-      if node.children.length == 1 and node.children.0.tagName == 'code':
-        textNodes = node.children.0.children
-        // replace, don't recurse
-        return makeCodeRow(textNodes)
-      break
-
     case 'div':
       node.children = wrapIntoSectionsByH2(node.children)
       break
@@ -72,14 +65,4 @@ makeHeadingAnchor(id) ->
         }
       }]
     }]
-  }
-
-makeCodeRow(textNodes) ->
-  lsc = textNodes.map(n -> n.value).join('').trim()
-
-  {
-    type: 'element'
-    tagName: 'CompiledCode'
-    properties: { class: 'row mb-3', lsc }
-    children: []
   }

@@ -1,5 +1,5 @@
 {
-  "parser": "lightscript-eslint",
+  "parser": "@oigroup/lightscript-eslint",
   "plugins": [
     "react"
   ],
@@ -16,6 +16,7 @@
     "semi": ["error", "never"],
     "react/require-render-return": 0,
     "constructor-super": 0,
-    "no-this-before-super": 0
+    "no-this-before-super": 0,
+    "react/prop-types": 0
   }
 }

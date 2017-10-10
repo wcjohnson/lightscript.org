@@ -1,5 +1,44 @@
 ## TOC
 
+## Quickstart
+
+If you're using Babel right now, you can get up and running with LightScript very quickly:
+
+- Install the Babel preset:
+
+    ```sh
+    npm install --save @oigroup/babel-preset-lightscript
+    ```
+
+- Add it to `.babelrc`:
+
+  ```json
+  {
+    "presets": [
+      [
+        "@oigroup/babel-preset-lightscript",
+        {
+          "env": {
+            "targets": {
+              "ie": 10
+            }
+          }
+        }
+      ]
+    ]
+  }
+  ```
+
+  > The LightScript preset includes `babel-preset-env` by default. Pass your `env` options along with the LightScript preset.
+
+- Write some LightScript in a source file with a `.lsc` extension
+
+  ```
+  console.log! "Hello, world!"
+  ```
+
+- Compile as normal using your existing build chain.
+
 ## Variables & Assignment
 
 ### `const`
@@ -17,7 +56,7 @@ the `const` keyword is also valid:
 
     const greeting = 'Hello, World!'
 
-LightScript uses Facebook's [Flow](https://flow.org/) typechecker and type syntax,
+LightScript uses Facebook's [Flow](https://flow.org/) type syntax,
 so you can optionally annotate types:
 
     greeting: string = 'Hello, World!'
@@ -25,13 +64,11 @@ so you can optionally annotate types:
 As a rule of thumb, anywhere you can use Flow syntax in JavaScript,
 you can use the same syntax in LightScript.
 
-Integration with the Flow typechecker has **not been built yet**,
-so while you can annotate your types, they will not yet be statically checked.
-This is blocking on [Flow accepting an AST as input](https://github.com/facebook/flow/issues/1515).
-As a stopgap, the `babel-preset-lightscript` may include
-[tcomb](https://github.com/gcanti/babel-plugin-tcomb), which provides runtime typechecks.
-
 Note that, unlike in JavaScript, the `:` cannot be followed by a newline.
+
+> Integration with the Flow typechecker has **not been built yet**,
+> so while you can annotate your types, they will not yet be statically checked.
+> This is blocking on [Flow accepting an AST as input](https://github.com/facebook/flow/issues/1515).
 
 ### `let` and `var`
 
@@ -193,6 +230,13 @@ they cannot be mixed for the same construct:
 Furthermore, the indentation level must be the same across all branches of
 `if`/`else`/`elif`, `try`/`catch`/`finally` and `do`/`while`.
 
+### Objects and Blocks
+
+In JavaScript, curly braces do double-duty, delimiting both objects and blocks of code. When you write code with curly braces, LightScript does its best to figure out what you mean.
+
+The general rule is that if something enclosed with `{ }` looks like an object, it will be treated as such, otherwise it will be treated as a block of code.
+
+For more specifics, check out [the gritty details](#something) -- though we hope you won't ever need to refer to them! It should "just work" the way you'd expect.
 
 ## Conditionals
 
@@ -228,9 +272,9 @@ In LightScript, ternaries look like `if`s:
 Note that if you move the `if` to the first line, the rest of the code
 must be dedented so that the `else`s have the same indent level as `animal`.
 
-### `null`-default `if` expressions
+### `undefined`-default `if` expressions
 
-If you don't include an `else`, it will be `null`:
+If you don't include an `else`, it will be `undefined`:
 
     maybeDog = if canBark: 'dog'
 
@@ -243,7 +287,9 @@ If you don't include an `else`, it will be `null`:
 Both `==` and `===` compile to `===`, which is almost always what you want.
 
 When you actually want to use a loose-equals (`==`), call the `looseEq()` function
-from the [standard library](#standard-library) (eg; `1~looseEq('1')`).
+from the [standard library](#standard-library):
+
+    1~looseEq('1')
 
 ### `!=`
     1 != 0
@@ -251,7 +297,9 @@ from the [standard library](#standard-library) (eg; `1~looseEq('1')`).
 Similarly, both `!=` and `!==` compile to `!==`.
 
 When you actually want to use a loose-not-equals (`!=`),
-call the `looseNotEq()` function from the [standard library](#standard-library).
+call the `looseNotEq()` function from the [standard library](#standard-library):
+
+    1~looseNotEq('2')
 
 ### `or`
     a or b
@@ -261,8 +309,6 @@ call the `looseNotEq()` function from the [standard library](#standard-library).
 
 ### `not`
     not c
-
-`not` may be removed from the language in the future.
 
 
 ## Functions and Methods
@@ -337,9 +383,19 @@ LightScript does not add implicit returns:
 - To setter methods (eg; `{ prop(newValue) -set> this._prop = newValue }`).
 - To constructor methods (eg; `constructor() ->`), which generaly should not return.
 
-### Annotated
+### Empty functions
 
-LightScript uses Facebook's [Flow](https://flow.org/) typechecker and type syntax.
+An arrow function without a body is illegal:
+
+    ->
+
+The standard way of writing an empty function in LightScript is:
+
+    -> return
+
+### Type Annotations
+
+LightScript uses Facebook's [Flow](https://flow.org/) type syntax.
 
     foo(a: string, b: number): number ->
       a.length + b
@@ -382,10 +438,11 @@ LightScript compiles them to bound functions:
 If you are using the
 [`async-generator-functions` babel transform](https://babeljs.io/docs/plugins/transform-async-generator-functions/),
 you can define async generators with `-*/>` and `=*/>`.
-Note that this is (at time of writing) a stage 3 proposal
-and thus not yet part of `babel-preset-env` or any browers.
 
-### Basic Methods
+>Note that this is (at time of writing) a stage 3 proposal
+>and thus not yet part of `babel-preset-env` or any browers.
+
+### Object Methods
     obj = {
       foo() -> 'hello'
       bar() ->
@@ -400,18 +457,13 @@ and thus not yet part of `babel-preset-env` or any browers.
 
 ### Getters and Setters
     obj = {
-      foo() -get> this._foo
-      foo(newValue) -set> this._foo = newValue
+      get foo() -> this._foo
+      set foo(newValue) -> this._foo = newValue
     }
     obj.foo = 'hi'
     obj.foo
 
 See also [Classes](#classes).
-
-Note that fat arrows (`=get>` and `=set>`) are not available,
-as getters and setters generally do not require binding.
-
-Note also that `-get>` and `-set>` cannot be combined with `-/>` or `-*>` syntax.
 
 
 ## Await
@@ -541,13 +593,22 @@ This also works with computed properties:
 
     treeTrunk?.rings?[age]
 
-Safe chains that contain methods will not be called more than once:
+This also works with function calls, terminating the chain if the callee is not a function:
+
+    if someAnimal.getFins?(): "fish"
+
+Calls and other complex expressions within safe chains are only evaluated once:
 
     getDancingQueen()?.feelTheBeat(tambourine)
 
-    getDanceFloor().dancingQueen?.isSeventeen
+If a safe chain expression terminates early, it will evaluate to `undefined`:
 
-Note that the default value is `null`, unlike CoffeeScript's `undefined`.
+    (null)?.prop
+
+> When using safe chaining, spaces are forbidden near the `?`:
+> ```
+> someAnimal.getFins? ()
+> ```
 
 ### Numerical Index Access
 
@@ -606,6 +667,55 @@ And makes chaining with functions much more convenient, obviating intermediate v
 
 Note that all lodash methods are included in the LightScript [standard library](#standard-library).
 
+## Bang Calls
+
+Functions can be called without parenthesis using a `!` suffix:
+
+    getSomething!
+      .then! (something) ->
+        print! something
+      .catch! (err) ->
+        print! "There was a problem!"
+
+This syntax combines with [Tilde Calls](#):
+
+    subject~verb! object
+
+...and safe chaining:
+
+    fish~hasPart?! "gills"
+
+Arguments can be on one line, separated by commas:
+
+    f! arg1, arg2, arg3
+
+...or split between multiple lines, with optional commas.
+
+    f!
+      arg1
+      arg2
+      arg3
+
+> Since they omit so much punctuation, bang calls are particularly sensitive to
+> whitespace. If a bang call is split across multiple lines, all arguments must
+> occur at the same indent level as the first:
+> ```
+> f!
+>   arg1
+>   arg2
+>     arg3 // nope!
+> ```
+> Subscripts (dots, brackets, and chained calls) that are aligned with
+> the arguments of the bang call will adhere to the bang call. Deeper subscripts
+> will adhere to the arguments.
+> ```
+> allAboard!
+>   theExpress!
+>     .train
+>   to
+>   .crazyTown!
+> ```
+
 
 ## Objects
 
@@ -613,12 +723,9 @@ See also [Methods](#methods).
 
 ### Single-Line Objects
 
-The same as JavaScript (ES7):
+The same as JavaScript, including ES7 syntax:
 
-    obj = { a: 'a', b, [1 + 1]: 'two' }
-
-For all ES7 features, use `babel-preset-lightscript` instead of `babel-plugin-lightscript`
-or include the babel plugins directly.
+    obj = { a: 'a', b, [1 + 1]: 'two', ...otherObj }
 
 ### Multi-Line Objects
 
@@ -638,7 +745,7 @@ Commas are optional; newlines are preferred.
 
 The same as JavaScript.
 
-    arr = [1, 2, 3]
+    arr = [1, 2, 3, ...more]
 
 ### Multi-Line Arrays
 
@@ -650,6 +757,16 @@ Again, commas are optional; newlines are preferred.
       2 + 1
       5 - 1
       5
+    ]
+
+### Safe Spread and Elision
+
+When using ES2015 spread, a safety check for `undefined` is added. `undefined` would otherwise crash the JavaScript runtime. This allows the use of `if` with spread to elide elements while assembling an array:
+
+    arr = [
+      1
+      ...if shouldAddTwo: 2
+      3
     ]
 
 
@@ -701,29 +818,9 @@ Only values:
     for val v in obj:
       print(v)
 
-Note the use of `Object.keys()` under the hood, as this will only iterate over
-_own_ keys, not inherited ones. Use a [traditional `for-in`](#traditional-for-in)
-if you wish to iterate over inherited properties as well.
-
-### Iterating over Ranges
-
-There is no builtin support for ranges.
-When the object instantiation is acceptable, use of `Array()`
-or the lodash `range()` method (provided by [the stdlib](#standard-library))
-is recommended:
-
-    for idx i in Array(10):
-      print(i)
-<!-- -->
-
-    for idx i in range(20, 100, 2):
-      print(i)
-
-If you are performing a numerical iteration and the array instantiation is problematic
-for performance, `for-;;` is recommended:
-
-    for let i = 0; i < n; i++:
-      print(i)
+> Note the use of `Object.keys()` under the hood, as this will only iterate over
+> _own_ keys, not inherited ones. Use a [traditional `for-in`](#traditional-for-in)
+> if you wish to iterate over inherited properties as well.
 
 ### Destructuring elements or values
 
@@ -768,24 +865,14 @@ Unfortunately, the more concise `for x in arr` form would be ambiguous
 
 ### Traditional `for-of`
 
-If you are iterating over `[Symbol.iterator]` (eg; a generator function),
-use `for-of` as in JS.
+A plain JavaScript `for-of` loop can be used to iterate over anything exposing `[Symbol.iterator]` (eg; a generator function):
 
-A construct like `for iter x in gen` may be introduced in the future for consistency.
-
-Like `for-in`, `for-of` must include `const`, `let`, `var`, or `now`:
-
-    for const x of gen:
+    for x of gen:
       print(gen)
 
-A naked variable is not allowed:
-
-    for x of gen():
-      print(x)
-
-This is to encourage developers iterating over arrays to use the more performant
-`for elem x in arr` rather than `for x of arr`, which is [slower](https://jsperf.com/for-of-vs-for-loop/15).
-It may be relaxed in the future.
+> Note that `for..of` is [slower](https://jsperf.com/for-of-vs-for-loop/15)
+> than `for (idx/elem/key/val) .. in` when iterating over plain JavaScript arrays
+> and objects.
 
 ### Single-line `for`
 
@@ -798,22 +885,40 @@ Note that you can combine this with single-line `if` statements:
     for elem x in stuff: if x > 3: print(x)
 
 
+### Iterating over Numerical Ranges
+
+With the large iteration toolbox available, numeric iteration is infrequently used, so there is no special syntax for ranges in LightScript. When numeric iteration is needed, the traditional `for` loop is up to the task:
+
+    for let i = 0; i < n; i++:
+      print(i)
+
+In situations where the overhead of allocating a nonce object is acceptable,
+use of `Array()` or the lodash `range()` method (provided by [the stdlib](#standard-library)) can make for cleaner-looking code:
+
+    for idx i in Array(10):
+      print(i)
+<!-- -->
+
+    for idx i in range(20, 100, 2):
+      print(i)
+
+
 ### `while` loops
 
-As in JavaScript, with the standard syntax options:
+As in JavaScript, with the option to use LightScript syntax:
 
     while true:
       doStuff()
 
 ### `do-while`
 
-As in JavaScript, with the standard syntax options:
+As in JavaScript, with the option to use LightScript syntax:
 
     do:
       activities()
     while true
 
-A newline (or semicolon) must follow the `while` clause, so this is not legal in LightScript:
+A newline or semicolon must follow the trailing `while` clause, so this is not legal in LightScript:
 
     do:
       activities()
@@ -831,52 +936,237 @@ parens around the discriminant are not:
         break
     }
 
-This may change in the future. A `guard` or `match` feature may also be added.
+> `switch` may be changed in the future to support whiteblock syntax
 
+## Spread Loops
 
-## Comprehensions
+Spread `for` is a feature in the vein of Comprehensions in other languages and prior versions of LightScript. They allow you to assemble an array or object by iterating over and transforming another data structure.
 
-### Array Comprehensions
+### Basic Syntax
 
-    doubledItems =
-      [ for elem item in array: item * 2 ]
+In situations where an ES2015+ spread element would be permitted, e.g.:
+
+    array = [ ...[spreadThis] ]
+
+...the syntax `...for` may be used to introduce a spread loop:
+
+    copyArray(src) ->
+      [ ...for elem e in src: [ e ] ]
+
+The spread loop can be thought of as introducing a single spread element for
+each iteration of the loop. Whatever expression comes at the end of the loop
+will be spread into the array, once for each iteration of the loop.
+
+### Arrays
+
+When spreading into an array in JavaScript, a layer of brackets is removed:
+
+    oneOne = [ ...[ 1 ] ]
+    // oneOne deepEquals [1]
+
+The same is true with spread loops; the expression at the end of the spread loop
+will be unwrapped and pushed to the array. In a typical case, this just means
+wrapping the element you want to push with `[ ]`:
+
+    myMap(arr, f) ->
+      [ ...for elem e in arr: [ f(e) ] ]
+
+This also means that you can map a single element of the input array to
+multiple elements of the output array:
+
+    input = [1, 2, 3]
+    output = [ ...for elem e in input: [e, e+1] ]
+    // output deepEquals [1, 2, 2, 3, 3, 4]
+
+### Objects
+
+Spreading into objects with spread loops works like regular object spread. the
+expression at the end of the loop will be assigned into the resulting
+object:
+
+    flip(obj) ->
+      { ...for key k, val v in obj: {[v]: k} }
+<!-- -->
+    mapObject(obj, f) ->
+      { ...for key k, val v in obj: f(k, v) }
+
+### Elision
+
+In other languages that have comprehensions -- CoffeeScript, for instance --
+each iteration of the loop always produces an element of the output array.
+
+In LightScript, spread `for` loops are *elisive*, meaning that if control flow
+does not reach a terminal expression, no element will be added to the array.
+
+In practice, this means you can use `if` statements inside the `for` loop to
+perform filtering on the output array:
+
+    evens(arr) ->
+      [ ...for elem e in arr: if e % 2 == 0: [e] ]
+    evens([1, 2, 3, 4, 5]) // [2, 4]
+
+> By combining elision and spread, you can make each element of your input
+> iterator generate zero, one, or more elements in the output object or array.
+> Clever use of spread `for` can do more than `map`, `filter`, and company
+> combined -- and more efficiently to boot. Promise you'll only use your new
+> powers for good!
+
+## Pattern Matching
+
+Pattern matching is a powerful form of conditional branching that lets you branch on deep structural properties using concise syntax.
+
+> The design for pattern matching is based loosely on [an early stage JS standard propsal](https://github.com/tc39/proposal-pattern-matching).
+> Features may be added to track the proposal, and if it is adopted as a
+> standard, it will naturally be supported.
+
 <!-- -->
 
-    filteredItems =
-      [ for elem item in array: if item > 3: item ]
+> As you look at the compiled code for pattern matching, you will notice a
+> dependency on `@oigroup/lightscript-runtime` -- **you must add this package
+> to your project's dependencies if you wish to use pattern matching!**
 
-Note that you can nest for-loops within an array, and they can take up multiple lines:
+### Core Syntax
 
-    listOfPoints = [
-      for elem x in xs:
-        for elem y in ys:
-          if x and y:
-            { x, y }
-    ]
+A pattern match begins with the keyword `match`, followed by a *discriminant*, and then a block of *cases*. The block of cases uses standard LightScript block syntax, meaning you can choose either `{ }` or `:` and whitespace to delimit your block.
 
-You can also nest comprehensions within comprehensions for constructing multidimensional arrays:
+The cases are set apart from each other using `|`. Each case consists of a *test* followed by a *consequent* block.
 
-    matrix = [ for idx row in Array(n):
-      [ for idx col in Array(n): { row, col } ]
-    ]
+The match can end with an `else` case, which catches anything not caught by the other cases.
 
-Note that if `else` is not provided, items that do not match an `if` are filtered out; that is,
+    DisplayedComponent = match product:
+      | Shirt:
+        <Shirt size={product.size} />
+      | Pants:
+        <Pants w={product.w} l={product.l} />
+      | CoffeeMug:
+        <CoffeeMug decal={product.decal} />
+      | else:
+        <UnknownProduct />
 
-    [ for idx i in Array(5): if i > 2: i ]
+A `match` executes only the first matching case; there is no fallthrough. `match` can be used as an expression, in which case the value of the expression is the last value reached in the matching case, or `undefined` if no case matches.
 
-will result in `[3, 4]`, not `[null, null, null, 3, 4]`
+### Cases
 
-### Object Comprehensions
+A case consists of an optional comma separated list of *atoms*, optionally followed by a *pattern*, optionally followed by a *guard*. Although all three of these things are optional when considered individually, at least one of the three must be present.
 
-As with Array Comprehensions, but wrapped in `{}` and with comma-separated `key, value`.
+#### Atoms
 
-    { for elem item in array: (item, f(item)) }
+Atoms perform basic tests on your discriminant. Multiple atoms can be separated by commas, and a discriminant that matches any one of them will pass the test.
 
-The parens are optional:
+    match something:
+      | OneAtom: "it matches OneAtom"
+      | Several, CommaSeparated, Atoms: "it matches at least one of the atoms"
 
-    flipped =
-      { for key k, val v in obj: v, k }
+##### Predicate Atoms
 
+If an atom begins with a `~`, the [Tilde Call](#) syntax of LightScript is used to apply a function to the discriminant. If the function returns truthy, the atom is matched. The discriminant is implicitly placed on the left of the tilde call:
+
+    match mellow:
+      | ~isHarshed(): "not cool man"
+      | else: "it's all good"
+
+##### Class Atoms
+
+If an atom is a class constructor, it will test whether the discriminant is
+an `instanceof` the corresponding class. When `Number`, `String`, or `Boolean` are used as atoms, a corresponding `typeof` check is performed on the discriminant.
+
+    match maybeComponentOrNumber:
+      | React.Component: "it's a react component"
+      | Number: "it's a number"
+      | else: "it's not a react component or a number"
+
+##### Regexp Atoms
+
+If an atom is a RegExp, `RegExp.prototype.test` is used to test if the discriminant matches the RegExp:
+
+    match str:
+      | /^hello/: "starts with hello"
+      | else: "nope"
+
+##### Default Atoms
+
+By default, any other expression appearing as an atom is tested for strict equality (`===`) against the discriminant.
+
+#### Patterns
+
+Each match case may contain a JavaScript destructuring pattern that the discriminant must match in order to satisfy the case. A pattern is introduced by `with`:
+
+    match someProduct:
+      | with { pageCount }: `it's a book with ${pageCount} pages`
+      | else: "not a book"
+
+Items matched in the destructuring are assigned to variables within the scope of the consequent.
+
+Both object and array destructuring patterns work. Patterns can be nested or
+have default values. Rest patterns can be used with arrays. A defaulted value will not be tested against.
+
+    match mysteryItem:
+      | with [ { pageCount }, ...rest ]:
+        `it's an array starting with a book?`
+      | with [first, second = 2]:
+        "at least one and maybe two items"
+      | with [plugin, { someOption } = defaultOptions]:
+        "a babel plugin?"
+
+#### Guards
+
+A guard is a final `if` condition that must be passed for the case to be satisfied. The guard begins with the `if` keyword and can utilize variable bindings from the pattern.
+
+    match product:
+      | with { color, size, price } if size == "XL" and color == "red":
+        "an extra large red shirt costs" + price
+      | else:
+        "something else"
+
+### All Together Now
+
+Combining atoms, patterns, and guards:
+
+    shipping = match product:
+      | ~isShirt() with { size } if size == "XXXXL":
+        bigShirtShippingCost
+      | ~isShirt():
+        normalShirtShippingCost
+      | ~isBook() with { pages }:
+        bookShippingCostPerPage * pages
+      | else:
+        throw new Error("we only sell shirts and books")
+
+### Advanced Matching Topics
+
+#### Create-Your-Own Atoms
+
+The behavior of atoms is determined by a new language feature,
+`Symbol.matches` -- making the power of pattern matching essentially
+unlimited. We outline only the default features of atoms here.
+
+The `isMatch` function you see in the generated code actually just calls
+`Atom[Symbol.matches](discriminant)` -- so by defining your own `Symbol.matches`
+in your project, you can customize the behavior of pattern matching.
+
+#### Pre-guards
+
+You may be able to avoid expensive pattern matching checks using a pre-guard. Pre-guards are delineated using `if` and `when` at the beginning of a match case:
+
+    result = match thing:
+      | if shouldDoExpensiveStuff when ~expensiveTest():
+        "yup"
+      | else:
+        "nope"
+
+The rest of the tests will only run if the pre-guard passes.
+
+#### Non-Assertive Destructuring
+
+If you have an atom that tests whether your discriminant is a particular type of object, it may be redundant to perform additional checking for the presence of keys on that object. You can skip this check by using `as` instead of `with`.
+
+For instance, if you know all shirts have a `size` field:
+
+    shipping = match product:
+      | ~isShirt() as { size } if size == "XXXXL":
+        bigShirtShippingCost
+
+Using `as` there skips a check for that field's presence.
 
 ## Classes
 
@@ -938,26 +1228,22 @@ regardless of its calling context.
 ### Class Getters and Setters
 
     class Animal:
-      noise() -get>
+      get noise() ->
         this.sound or 'grrr'
 
-      noise(newValue) -set>
+      set noise(newValue) ->
         this.sound = newValue
 
 See also [Object Methods](#object-methods).
 
-### Class properties ("class instance fields")
+### Class properties
 
 As in ES7:
 
     class Animal:
       noise = 'grrr'
 
-Note that `babel-plugin-lightscript` by itself will not process class properties;
-you must include the `babel-plugin-transform-class-properties` plugin yourself,
-or use `babel-preset-lightscript`.
-
-### Static properties and methods ("class static fields")
+### Static properties and methods
 
 As in ES7:
 
@@ -975,18 +1261,14 @@ As in ES7:
       @methodDecorator
       talk() -> 'grrr'
 
-Note that `babel-plugin-lightscript` by itself will not process decorators;
-you must include the `babel-plugin-transform-decorators-legacy` plugin yourself,
-or use `babel-preset-lightscript`.
-
 ## Standard Library
 
-By default, LightScript makes all of Lodash available to be imported as needed:
+If you reference the name of a `lodash` method and you haven't defined that name as something else within scope, LightScript will automatically import the method from `lodash`:
 
     [0.1, 0.3, 0.5, 0.7]~map(round)~uniq()
     // [0, 1]
 
-There are also several non-Lodash functions available which will be inlined:
+There are also methods for invoking the JavaScript operators whose syntax has been disabled in LightScript:
 
     looseEq(3, '3')
     // true
@@ -1006,30 +1288,28 @@ There are also several non-Lodash functions available which will be inlined:
 - `looseEq(a, b)`, which uses the JavaScript loose-equality `==` to compare two variables
   (available because in LightScript, `==` compiles to `===`).
 - `looseNotEq(a, b)`, which uses the JavaScript loose-inequality `!=` to compare two variables.
-- all the JavaScript bitwise operators
-  - `bitwiseNot(x)`, returns the result of `~x` (since `~` has been repurposed in LightScript for [Tilde Calls](#tilde-calls)).
-  - `bitwiseAnd(a, b)`, returns the result of `a & b`.
-  - `bitwiseOr(a, b)`, returns the result of `a | b`.
-  - `bitwiseXor(a, b)`, returns the result of `a ^ b`.
-  - `bitwiseLeftShift(a, b)`, returns the result of `a << b`.
-  - `bitwiseRightShift(a, b)`, returns the result of `a >> b`.
-  - `bitwiseZeroFillRightShift(a, b)`, returns the result of `a >>> b`.
+- all the JavaScript bitwise operators:
+  - `bitwiseNot(x)`, compiles to `~x`.
+  - `bitwiseAnd(a, b)`, compiles to `a & b`.
+  - `bitwiseOr(a, b)`, compiles to `a | b`.
+  - `bitwiseXor(a, b)`, compiles to `a ^ b`.
+  - `bitwiseLeftShift(a, b)`, compiles to `a << b`.
+  - `bitwiseRightShift(a, b)`, compiles to `a >> b`.
+  - `bitwiseZeroFillRightShift(a, b)`, compiles to `a >>> b`.
 
 ### Overriding
 
-User-defined identifiers will override a stdlib identifier:
+If you define a variable named after a `lodash` method, your definition supersedes the automatic import:
 
     round(x) -> 100
     [0.1, 0.3, 0.5, 0.7]~map(round)~uniq()
     // [100]
 
-In the future, this will be discouraged with an ESLint rule.
-
 ### Disabling
 
-To disable this feature, pass `stdlib: false` to `babel-plugin-lightscript`, eg;
+To disable this feature, pass `stdlib: false` as a Babel option, e.g.:
 
-```
+```json
 // .babelrc
 {
   "plugins": [
@@ -1040,7 +1320,7 @@ To disable this feature, pass `stdlib: false` to `babel-plugin-lightscript`, eg;
 
 You may also similarly disable inclusion of lodash:
 
-```
+```json
 // .babelrc
 {
   "plugins": [
@@ -1077,202 +1357,6 @@ If you are not transpiling `import` to `require()` calls with another plugin
 
 ## Automatic Semicolon Insertion
 
-*See the [tl;dr](#asi-tldr) for a quick overview*
-
-90% of the time, JavaScript's Automatic Semicolon Insertion feature works every time.
-That is, in most JavaScript code, semicolons are unnecessary.
-
-But there are [a handful](http://inimino.org/~inimino/blog/javascript_semicolons)
-of cases where a semicolon needs to be inserted, as encoded in
-[the eslint `semi: "never"` rule](http://eslint.org/docs/rules/semi#options):
-
-> statements beginning with `[`, `(`, `/`, `+`, or `-`
-
-ES6 and JSX each introduce an additional ambiguity: ``` ` ``` and `<`, which are handled as well.
-
-LightScript solves each issue in a slightly different way,
-though each fix is essentially an encoding of stylistic best-practice into the syntax itself.
-
-In practice, if you stick to community-standard code style,
-you should not have to worry about any of this; they are documented for completeness.
-
-### `+` and `-`: binary vs. unary
-
-There are two possible interpretations of this code:
-
-    1
-    -1
-
-It could either be a `1` statement followed by a `-1` (negative one)
-statement, or a single `1 - 1` statement.
-JavaScript chooses `1 - 1`, which is typically undesired.
-
-This is because `+` and `-` take two forms in JavaScript:
-*binary* (add or subtract two numbers) and *unary*
-(make a number positive or negative).
-
-To resolve this ambiguity, LightScript requires that *unary* `+` and `-`
-are not separated by a space from their argument.
-That is, `-1` is "negative one" while `- 1` is invalid LightScript.
-
-With this restriction in place, it easy to give preference to the unary form
-when a `+` or `-` begins a line:
-
-    1
-    + 1
-
-    1+1
-
-    1
-    +1
-
-Only the last example is a deviation from JavaScript,
-which would interpret the two lines as `1 + 1`.
-
-Again, beware that unary `+` and `-` cannot be followed by a space in LightScript:
-
-    - 1
-
-Without this fix, it would be difficult to implicitly return negative numbers:
-
-    negativeThree() ->
-      three = 3
-      -three
-
-(This would be `const three = 3 - three;` in JavaScript).
-
-Similarly, it would be difficult to have lists with negative numbers:
-
-    numbers = [
-      0
-      -1
-      -2
-    ]
-
-(Without this ASI fix, that'd be `const numbers = [0 - 1 - 2];`).
-
-### `/`: division vs. regular expression
-
-In JavaScript, the following code throws a SyntaxError:
-
-    let one = 1
-    /\n/.test('1')
-
-This is because it tries to parse the `/` at the start of the second line as division.
-As you can see, LightScript does not share this problem.
-
-LightScript makes a slightly crude generalization that draws from the same strategy
-as `+` and `-` (above): Regular Expressions can't start with a space character (` `):
-
-    / \w/.test(' broken')
-
-This doesn't happen very often, and when it does, can be trivially fixed
-by escaping the space or using a `\s` character:
-
-    /\ \w/.test(' not broken')
-
-    /\s\w/.test(' not broken')
-
-Similary, a division `/` that starts a line cannot be followed by a space:
-
-    1
-    /2
-
-This space is not required when the `/` does not start a line:
-
-    1/2
-
-    1
-    / 2
-
-### `(`: expressions vs. function calls
-
-This is perhaps the most frequently problematic ASI failure, and the most easily fixed.
-
-In JavaScript, the following code would try to call `one(1 + 1)`, which is not what you want:
-
-    two = one + one
-    (1 + 1) / 3
-
-In LightScript, the opening paren of a function call must be on the same line as the function:
-
-    doSomething(
-      param)
-
-    doSomething (
-      param
-    )
-
-    doSomething
-      (param) // oops!
-
-### `[`: index-access vs. arrays
-
-In JavaScript, the following code would try to access `one[1, 2, 3]` which isn't what you want:
-
-    two = one + one
-    [1, 2, 3].forEach(i => console.log(i))
-
-That's because you often do see code like this:
-
-    firstChild = node
-      .children
-      [0]
-
-In LightScript, accessing an index or property using `[]` requires an indent:
-
-    node
-      .children
-      [0]
-
-    node
-    .children
-    [0] // oops!
-
-The required indent is relative to the line that starts a subscript chain.
-
-Note that this rule also applies to the "numerical index access" feature:
-
-    node
-      .children
-      .0
-
-    node
-    .children
-    .0 // oops!
-
-### `<`: less-than vs. JSX
-
-In JavaScript, the following would be parsed as `one < MyJSX` and break:
-
-```
-two = one + one
-<MyJSX />
-```
-
-LightScript solves this in a similar manner to `+`, `-`, and `/`:
-a less-than `<` that starts a line must be followed by a space:
-```
-isMyNumberBig = bigNumber
-  <myNumber
-```
-is broken, but this works:
-
-    isMyNumberBig = bigNumber
-      < myNumber
-
-### ``` ` ```: tagged vs. untagged templates
-
-In JavaScript, the following would be parsed as ```hello`world` ```:
-
-    hello
-    `world`
-
-As with function calls, a tagged template expression in LightScript must have
-the opening ``` ` ``` on the same line as the tag.
-
-### ASI tl;dr
-
 **You never need semicolons in LightScript to separate statements.**
 
 Instead, there are a few restrictions around edge cases:
@@ -1289,30 +1373,13 @@ isOver100 = twoHundred
   < myNumber
 ```
 
-## Known Ambiguities
+More details about ASI are in [the gory details](#), which we hope you'll never need to consult.
 
-Unfortunately, there are a few ambiguous corner-cases.
-You are unlikely to hit them and there are easy fixes.
-
-### Colons, Arrow, and Types
-
-If you have an `if` whose test is a function call,
-and whose consequent is an arrow function without parentheses or curly braces, eg;
-
-    if fn(): x => 4
-
-it will parse as a function `fn() => 4` with type annotation `x`,
-and then throw a SyntaxError: `Unexpected token, expected :`.
-
-This can be corrected by wrapping the param in parens:
-
-    if fn(): (x) => 4
-
-
-## Deviations from JavaScript
+## Porting from JavaScript
 
 LightScript is a "rough superset" of JavaScript: *almost* all valid JavaScript
-is valid LightScript.
+is valid LightScript. In a lot of cases, it should be possible to rename `.js`
+to `.lsc`, run the linter, fix a few errors, and go.
 
 This section aims to comprehensively document the cases where valid JavaScript
 compiles differently (or breaks) in LightScript.
@@ -1400,62 +1467,277 @@ While invisible characters are legal in strings, the only ones allowed in code
 are ` ` (ascii-32), `\n` and `\r\n`. Tabs, non-breaking spaces, and exotic unicode
 such as `\u8232` raise `SyntaxError`s.
 
-### Blocks vs. Objects
+### Sequence expressions require `( )`
 
-In LightScript, a `{` at the beginning of a line parses as the start of an object, not a block.
-For example, the following code breaks in LightScript:
+In JavaScript, a comma-separated list of expressions with optional `( )` is parsed as a sequence expression.
 
-    if (true)
+The implicit parentheses introduce grammatical ambiguities with [Bang Calls](#). In LightScript, the `( )` is required:
+
+    // illegal in LightScript
+    a, b
+<!-- -->
+    // legal in LightScript
+    (a, b)
+
+### Labeled expressions are illegal
+
+JavaScript [labeled statements](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/label) can no longer be used with expressions:
+
+    label: expr
+
+Using labeled jumps is bad practice and should be discouraged, but if you really need them, you can still label loop statements:
+
+    outerLoop: while true:
+      innerLoop: while true:
+        continue outerLoop
+
+## The Gory Details
+
+> This is the part of the manual we hope you don't have to read. If you're here
+> because something went wrong for you and not out of morbid curiosity, we want to
+> hear from you. Feel free to [join the LightScript Gitter chat](https://gitter.im/lightscript/Lobby) and mention me `@wcjohnson`.
+
+### ASI
+
+In vanilla JavaScript, ASI tends to fail on statements beginning with `[`, `(`, `/`, `+`, or `-`. ES6 and JSX each introduce an additional ambiguity: ``` ` ``` and `<`, which are handled as well.
+
+LightScript solves each issue in a slightly different way,
+though each fix is essentially an encoding of stylistic best-practice into the syntax itself.
+
+In practice, if you stick to community-standard code style,
+you should not have to worry about any of this; they are documented for completeness.
+
+#### `+` and `-`: binary vs. unary
+
+There are two possible interpretations of this code:
+
+    1
+    -1
+
+It could either be a `1` statement followed by a `-1` (negative one)
+statement, or a single `1 - 1` statement.
+JavaScript chooses `1 - 1`, which is typically undesired.
+
+This is because `+` and `-` take two forms in JavaScript:
+*binary* (add or subtract two numbers) and *unary*
+(make a number positive or negative).
+
+To resolve this ambiguity, LightScript requires that *unary* `+` and `-`
+are not separated by a space from their argument.
+That is, `-1` is "negative one" while `- 1` is invalid LightScript.
+
+With this restriction in place, it easy to give preference to the unary form
+when a `+` or `-` begins a line:
+
+    1
+    + 1
+
+    1+1
+
+    1
+    +1
+
+Only the last example is a deviation from JavaScript,
+which would interpret the two lines as `1 + 1`.
+
+Again, beware that unary `+` and `-` cannot be followed by a space in LightScript:
+
+    - 1
+
+Without this fix, it would be difficult to implicitly return negative numbers:
+
+    negativeThree() ->
+      three = 3
+      -three
+
+(This would be `const three = 3 - three;` in JavaScript).
+
+Similarly, it would be difficult to have lists with negative numbers:
+
+    numbers = [
+      0
+      -1
+      -2
+    ]
+
+(Without this ASI fix, that'd be `const numbers = [0 - 1 - 2];`).
+
+#### `/`: division vs. regular expression
+
+In JavaScript, the following code throws a SyntaxError:
+
+    let one = 1
+    /\n/.test('1')
+
+This is because it tries to parse the `/` at the start of the second line as division.
+As you can see, LightScript does not share this problem.
+
+LightScript makes a slightly crude generalization that draws from the same strategy
+as `+` and `-` (above): Regular Expressions can't start with a space character (` `):
+
+    / \w/.test(' broken')
+
+This doesn't happen very often, and when it does, can be trivially fixed
+by escaping the space or using a `\s` character:
+
+    /\ \w/.test(' not broken')
+
+    /\s\w/.test(' not broken')
+
+Similary, a division `/` that starts a line cannot be followed by a space:
+
+    1
+    /2
+
+This space is not required when the `/` does not start a line:
+
+    1/2
+
+    1
+    / 2
+
+#### `(`: expressions vs. function calls
+
+This is perhaps the most frequently problematic ASI failure, and the most easily fixed.
+
+In JavaScript, the following code would try to call `one(1 + 1)`, which is not what you want:
+
+    two = one + one
+    (1 + 1) / 3
+
+In LightScript, the opening paren of a function call must be on the same line as the function:
+
+    doSomething(
+      param)
+
+    doSomething (
+      param
+    )
+
+    doSomething
+      (param) // oops!
+
+#### `[`: index-access vs. arrays
+
+In JavaScript, the following code would try to access `one[1, 2, 3]` which isn't what you want:
+
+    two = one + one
+    [1, 2, 3].forEach(i => console.log(i))
+
+That's because you often do see code like this:
+
+    firstChild = node
+      .children
+      [0]
+
+In LightScript, accessing an index or property using `[]` requires an indent:
+
+    node
+      .children
+      [0]
+
+    node
+    .children
+    [0] // oops!
+
+The required indent is relative to the line that starts a subscript chain.
+
+Note that this rule also applies to the "numerical index access" feature:
+
+    node
+      .children
+      .0
+
+    node
+    .children
+    .0 // oops!
+
+#### `<`: less-than vs. JSX
+
+In JavaScript, the following would be parsed as `one < MyJSX` and break:
+
+```
+two = one + one
+<MyJSX />
+```
+
+LightScript solves this in a similar manner to `+`, `-`, and `/`:
+a less-than `<` that starts a line must be followed by a space:
+```
+isMyNumberBig = bigNumber
+  <myNumber
+```
+is broken, but this works:
+
+    isMyNumberBig = bigNumber
+      < myNumber
+
+#### ``` ` ```: tagged vs. untagged templates
+
+In JavaScript, the following would be parsed as ```hello`world` ```:
+
+    hello
+    `world`
+
+As with function calls, a tagged template expression in LightScript must have
+the opening ``` ` ``` on the same line as the tag.
+
+Unfortunately, there are a few ambiguous corner-cases.
+You are unlikely to hit them and there are easy fixes.
+
+### Known Grammar Ambiguities
+
+#### Colons, Arrow, and Flow Types
+
+If you have an `if` whose test is a function call,
+and whose consequent is an arrow function without parentheses or curly braces, eg;
+
+    if fn(): x => 4
+
+it will parse as a function `fn() => 4` with type annotation `x`,
+and then throw a SyntaxError: `Unexpected token, expected :`.
+
+This can be corrected by wrapping the param in parens:
+
+    if fn(): (x) => 4
+
+
+### Blocks and Objects
+
+`{ }` does double duty in JavaScript, delimiting both blocks of code and objects. When LightScript encounters `{ }`, it tries to use context to determine whether you meant to write an object or a code block. We hope this process "just works" for everyone, but in the event it doesn't, here's a rundown of the detailed rules at play.
+
+- **Whenever plain JavaScript syntax is used with `if`, `for`, `do`, or `while`, the following `{ }` is always treated as a block of code:**
+
+    ```
+    z = 3
+    x = if (true) { z }
+    // x === 3
+    ```
+
+- **Whenever LightScript colon syntax is used with `if`, `for`, `do`, or `while`, the following `{ }` will first be treated as an object. If it fails to parse as an object, it will be treated as a block of code:**
+
+    ```
+    z = 3
+    x = if true: { z }
+    // x deepEquals { z: 3 }
+    ```
+
+- **Whenever `{ }` is encountered elsewhere, it is first treated as an object. If it fails to parse as an object, it will be treated as a block of code:**
+
+    ```
+    a; { b } = c
     {
-      // body goes here
-      let x = 3
+      d = e
     }
+    ```
 
-You must instead use the following style when using curly braces:
+- **If something in `{ }` cannot be parsed as an object or a block, the error that allows the parser to get furthest in the source code is displayed.**
 
-    if (true) {
-      let x = 3
+  In this example, `while` is illegal as an expression in an object, but `c: d()` is illegal in a block of code. Since that error is further along in the source, that is the error that gets reported.
+
+    ```
+    {
+      a: while true: b
+      c: d()
     }
-
-In the rare case that you wish to use an anonymous block, such as
-
-    function foo() {
-      // some code up here
-      {
-        // code in an anonymous block here
-        let x = 'private!'
-      }
-      // more code down here
-      let x = 5
-    }
-
-you may prefix the anonymous block with a semicolon, as so:
-
-    function foo() {
-      // some code up here
-      ;{
-        // code in an anonymous block here
-        let x = 'private!'
-      }
-      // more code down here
-      let x = 5
-    }
-
-Similarly, if using blocks with `switch`/`case`, you cannot write
-
-    switch (foo) {
-      case bar:
-        {
-          // contents of block here
-          let x = 3
-        }
-    }
-
-and must instead write
-
-    switch (foo) {
-      case bar: {
-        // contents of block here
-        let x = 3
-      }
-    }
+    ```

@@ -5,14 +5,28 @@ import sanitize from 'hast-util-sanitize'
 import toH from 'hast-to-hyperscript'
 import React from 'react'
 
+detab = require('detab')
+u = require('unist-builder')
 
-export default plugin(processor, options) -> {
+handlers = {
+  code(h, node) ->
+    var value = node.value ? detab(node.value + '\n') : ''
+    var lang = node.lang
+    var props = {}
+
+    if lang == null or lang == "compiled_lsc":
+      h(node, 'CompiledCode', { lsc: value })
+    else:
+      h(node, 'RawCode', { code: value })
+}
+
+export default plugin(options) -> {
   settings = options or {}
   createElement = settings.createElement or React.createElement
   components = settings.remarkReactComponents or {}
   clean = settings.sanitize != false
   scheme = if clean and (typeof settings.sanitize != 'boolean'): settings.sanitize
-  toHastOptions = settings.toHast or {}
+  toHastOptions = { handlers }
   traverse = options.traverse or null
 
   h(name, props, children) -> {
@@ -24,8 +38,7 @@ export default plugin(processor, options) -> {
   }
 
   // fake class b/c it breaks with a real one
-  Compiler() -> {}
-  Compiler.prototype.compile(node) -> {
+  compile(node) -> {
     let hast = {
       type: 'element'
       tagName: 'div'
@@ -33,10 +46,13 @@ export default plugin(processor, options) -> {
       children: toHAST(node, toHastOptions).children
     }
 
-    if clean: now hast = sanitize(hast, scheme)
+    //if clean: now hast = sanitize(hast, scheme)
     if traverse: now hast = traverse(hast)
 
     toH(h, hast, settings.prefix)
   }
-  processor.Compiler = Compiler
+
+  this.Compiler = compile
+
+  return
 }

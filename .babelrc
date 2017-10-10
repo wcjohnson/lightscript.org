@@ -1,12 +1,10 @@
 {
-  "presets": ["lightscript"],
+  "presets": ["@oigroup/babel-preset-lightscript"],
   "plugins": [
     "add-module-exports"
   ],
   "ignore": [
     "node_modules",
-    "babel-plugin-lightscript",
-    "babylon-lightscript",
     "gatsby"
   ]
 }

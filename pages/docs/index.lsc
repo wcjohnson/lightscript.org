@@ -106,10 +106,10 @@ ScrollTargetSection.contextTypes = {
   onLeave: React.PropTypes.func.isRequired
 }
 
-CodeCol({ code, syntax }) ->
+CodeCol({ code, syntax, width = 6 }) ->
   html = highlight(syntax, code, true).value
 
-  <Col sm="6" className={syntax}>
+  <Col sm={width} className={syntax}>
     <pre className="h-100 pt-2">
       <code dangerouslySetInnerHTML={{ __html: html }} />
     </pre>
@@ -125,16 +125,32 @@ CompiledCode({ lsc }) ->
     </Row>
   </div>
 
+RawCode({ code }) ->
+  <div className="compiled-code-group compiled-code-group-highlight mb-3">
+    <Row className="mx-0">
+      <Col sm={12}>
+        <pre className="h-100 pt-2">
+          <code>{code}</code>
+        </pre>
+      </Col>
+    </Row>
+  </div>
+
 convertDocsMarkdownToReact() ->
   markdownWithTOC = remark()
     .use(toc)
-    .process(rawDocs)
+    .processSync(rawDocs)
     .contents
+
+  // console.log(markdownWithTOC)
 
   // HACK; shouldn't need to double-process this way
   split = markdownWithTOC.split('\n## ')
   tocMD = split[0].replace('## TOC\n', '')
   docMD = '## ' + split.slice(1).join('\n## ')
+  // console.log(tocMD)
+  // console.log("---")
+  // console.log(docMD)
 
   const TableOfContents = remark()
     .use(markdownToReact, {
@@ -145,7 +161,7 @@ convertDocsMarkdownToReact() ->
         a: NavLink
       }
     })
-    .process(tocMD)
+    .processSync(tocMD)
     .contents
 
   const DocsContents = remark()
@@ -158,10 +174,12 @@ convertDocsMarkdownToReact() ->
         table: Table
         blockquote: Blockquote
         CompiledCode
+        RawCode
       }
     })
-    .process(docMD)
+    .processSync(docMD)
     .contents
-    .props.children
+
+  // console.log(DocsContents)
 
   { TableOfContents, DocsContents }

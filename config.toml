@@ -1,4 +1,4 @@
-siteTitle = "LightScript"
+siteTitle = "@oigroup/LightScript"
 linkPrefix = "/"
 docPages = [
   "/docs/",
