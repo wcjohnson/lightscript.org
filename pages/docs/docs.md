@@ -1,43 +1,12 @@
 ## TOC
 
-## Quickstart
+## Foreword
 
-If you're using Babel right now, you can get up and running with LightScript very quickly:
+> The information in this document applies to version 3.0.0-alpha.7 of the compiler.
 
-- Install the Babel preset:
-
-    ```sh
-    npm install --save @oigroup/babel-preset-lightscript
-    ```
-
-- Add it to `.babelrc`:
-
-  ```json
-  {
-    "presets": [
-      [
-        "@oigroup/babel-preset-lightscript",
-        {
-          "env": {
-            "targets": {
-              "ie": 10
-            }
-          }
-        }
-      ]
-    ]
-  }
-  ```
-
-  > The LightScript preset includes `babel-preset-env` by default. Pass your `env` options along with the LightScript preset.
-
-- Write some LightScript in a source file with a `.lsc` extension
-
-  ```
-  console.log! "Hello, world!"
-  ```
-
-- Compile as normal using your existing build chain.
+> `@oigroup/lightscript` adheres to semver regarding language syntax and
+> semantics -- the same major compiler version should compile the same source
+> to the same output, barring bug fixes and optimizations.
 
 ## Variables & Assignment
 
@@ -534,11 +503,6 @@ doesn't work, but this does:
 awaitAll(promises) -/>
   <- [...promises]
 ```
-This can alo be combined with Array Comprehensions:
-```
-fetchAll(urls) -/>
-  <- [for elem url in urls: fetch(url)]
-```
 
 ### Safe Await
 
@@ -647,7 +611,7 @@ immutable typed records from the functions that go with them,
 while preserving the human-readability of "subject.verb(object)" syntax
 that Object-Oriented methods provide.
 
-It enables slightly more readable code in simple situations:
+It can enable more readable code:
 
     if response~isError():
       freakOut()
@@ -665,7 +629,11 @@ And makes chaining with functions much more convenient, obviating intermediate v
       ~sortBy(duck => duck.height)
       .filter(duck => duck.isGosling)
 
-Note that all lodash methods are included in the LightScript [standard library](#standard-library).
+`~` can be thought of as roughly analogous to the proposed JavaScript bind operator `::`, except that `~` avoids the use of `this`, `Function.call`, and the JavaScript OO system in favor of purely functional code.
+
+As part of a potential future JavaScript standard proposal, `~>` is supported as an alternative syntax for tilde calls, since `~` is a reserved JavaScript operator.
+
+    subject~>verb(object)
 
 ## Bang Calls
 
@@ -725,7 +693,7 @@ See also [Methods](#methods).
 
 The same as JavaScript, including ES7 syntax:
 
-    obj = { a: 'a', b, [1 + 1]: 'two', ...otherObj }
+    obj = { a: 'a', b, [1 + 1]: 'two', ...spr }
 
 ### Multi-Line Objects
 
@@ -745,7 +713,7 @@ Commas are optional; newlines are preferred.
 
 The same as JavaScript.
 
-    arr = [1, 2, 3, ...more]
+    arr = [1, 2, 3]
 
 ### Multi-Line Arrays
 
@@ -761,11 +729,11 @@ Again, commas are optional; newlines are preferred.
 
 ### Safe Spread and Elision
 
-When using ES2015 spread, a safety check for `undefined` is added. `undefined` would otherwise crash the JavaScript runtime. This allows the use of `if` with spread to elide elements while assembling an array:
+When using ES2015 spread, a safety check is added to make sure you aren't spreading `undefined`, which would throw a `TypeError` at runtime. This also allows the use of `if` with spread to elide elements while assembling an array:
 
     arr = [
       1
-      ...if shouldAddTwo: 2
+      ...if shouldAddTwo: [2]
       3
     ]
 
@@ -944,11 +912,7 @@ Spread `for` is a feature in the vein of Comprehensions in other languages and p
 
 ### Basic Syntax
 
-In situations where an ES2015+ spread element would be permitted, e.g.:
-
-    array = [ ...[spreadThis] ]
-
-...the syntax `...for` may be used to introduce a spread loop:
+In situations where an ES2015+ spread element would be permitted, the syntax `...for` may be used to introduce a spread loop:
 
     copyArray(src) ->
       [ ...for elem e in src: [ e ] ]
@@ -1307,52 +1271,17 @@ If you define a variable named after a `lodash` method, your definition supersed
 
 ### Disabling
 
-To disable this feature, pass `stdlib: false` as a Babel option, e.g.:
+To disable this feature, pass `stdlib: false` as a [compiler option](#).
 
-```json
-// .babelrc
-{
-  "plugins": [
-    ["lightscript", { "stdlib": false }]
-  ]
-}
-```
-
-You may also similarly disable inclusion of lodash:
-
-```json
-// .babelrc
-{
-  "plugins": [
-    ["lightscript", {
-      "stdlib": {
-        "lodash": false,
-      }
-    }]
-  ]
-}
-```
-
-Note that this is unlikely to be necessary;
-projects that simply don't call lodash methods won't have any lodash imports,
-and if you do the import yourself LightScript won't add an import.
+To disable Lodash only, pass `stdlib: { lodash: false }` as a [compiler option](#).
 
 ### Using require instead of import
 
-If you are not transpiling `import` to `require()` calls with another plugin
-(or with `babel-preset-lightscript`), you may need the `require: true` setting:
+If you want `require()`  rather than `import` in the output code, add `useRequire: true` as a [compiler option](#):
 
 ```
-// .babelrc
-{
-  "plugins": [
-    ["lightscript", {
-      "stdlib": {
-        "require": true,
-      }
-    }]
-  ]
-}
+'use @oigroup/lightscript with useRequire'
+[0.5]~map(round)~uniq()
 ```
 
 ## Automatic Semicolon Insertion
@@ -1490,6 +1419,134 @@ Using labeled jumps is bad practice and should be discouraged, but if you really
     outerLoop: while true:
       innerLoop: while true:
         continue outerLoop
+
+## Compiler Options
+
+Some functions of the compiler can be further configured using an options
+interface. Whenever the docs refer to a compiler option, it can be configured
+as shown
+
+### Via `.babelrc`
+
+A configuration object is passed to the compiler as the second element of the `preset` array. Additional keys added to this object convey compiler option settings.
+
+```json
+// babelrc
+{
+  "presets": [
+    [
+      "@oigroup/babel-preset-lightscript",
+      {
+        "env": { "targets": { "ie": 10 } },
+        "placeholderArgs": true, // option
+        "stdlib": false // option
+      }
+    ]
+  ]
+}
+```
+
+### Via directives
+
+Compiler options can be configured for individual files by placing a JavaScript
+directive string at the top of the file:
+
+    // myapp.lsc
+    'use @oigroup/lightscript with placeholderArgs'
+    -> _
+
+Naming an option sets it to `true`. `:` can be used to provide a value other than `true`:
+
+    // myapp.lsc
+    'use @oigroup/lightscript with placeholderArgs, placeholder: "$$"'
+    -> $$1
+
+## Non-Standard Features
+
+The @oigroup branch contains features that the main LightScript language, maintained by @rattrayalex, has either rejected or not evaluated for inclusion. In order to maintain compatibility with core LightScript, these features are off by default and must be enabled via [compiler options](#).
+
+### Existential Operator
+
+Compiler option `existential: true` enables the existential operator. Similar to CoffeeScript, a suffix `?` will loosely compare any expression with `null`:
+
+    'use @oigroup/lightscript with existential'
+    if not entity.nonNullableField?:
+      throw new Error("non-nullable violation")
+
+As opposed to a check for falsiness, an existential check does not fail on `false`, `''`, or `0` -- it only fails when a value is `null` or `undefined`.
+
+**Status:** This feature has been explicitly rejected by the upstream language, see https://github.com/lightscript/babylon-lightscript/pull/26
+
+### Placeholder Args
+
+Compiler option `placeholderArgs: true` enables placeholder arguments. An extension of features like Kotlin's `it`, they enable a terse syntax for functional programming.
+
+A placeholder (by default, `_`) appearing in a function without arguments implicitly adds an argument to that function. The placeholder will be replaced with the argument when the function is called:
+
+    'use @oigroup/lightscript with placeholderArgs'
+    lastNames = people.map(-> _.lastName)
+
+When a placeholder is followed by an integer literal `n`, it represents the `n`'th (zero-indexed) argument of the function.
+
+    'use @oigroup/lightscript with placeholderArgs'
+    add = -> _0 + _1
+
+Placeholders with indices cannot be mixed with plain placeholders:
+
+    'use @oigroup/lightscript with placeholderArgs'
+    add = -> _ + _1
+
+Placeholders can't be used on functions that already have explicit args:
+
+    'use @oigroup/lightscript with placeholderArgs'
+    add(x) -> x + _
+
+The placeholder can be changed by passing a `placeholder` compiler option. (This is helpful if e.g. you use `_` for `underscore`):
+
+    'use @oigroup/lightscript with placeholderArgs, placeholder: "$$"'
+    add = -> $$0 + $$1
+
+### Subscript Indentation
+
+LightScript proper requires that subscripts on a new line must be indented from
+the previous line, on pain of a syntax error:
+
+    doAsyncThing()
+    .then! (result) -> print! result
+    .catch! (err) -> print! err
+
+However, a lot of people use that coding style, and the compiler shouldn't be enforcing something else if it doesn't have to. Enter compiler option `noEnforcedSubscriptIndentation: true`, which disables that requirement:
+
+    'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+    doAsyncThing()
+    .then! (result) -> print! result
+    .catch! (err) -> print! err
+
+When using this option, the ASI rules for brackets are similar to general ASI in LightScript -- the opening bracket must appear on the same line as the expression being indexed:
+
+    a
+      [0]
+<!-- -->
+    'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+    a
+    [0]
+<!-- -->
+    'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+    a[
+      0
+    ]
+
+Also note that because of the parsing conditions involving bang calls, even when this option is enabled, if you want to subscript an argument of a bang call, it must be indented more deeply than the argument:
+
+    'use @oigroup/lightscript with noEnforcedSubscriptIndentation'
+    bang!
+      arg
+      .sticksToBang
+
+    bang!
+      arg
+        .sticksToArg
+
 
 ## The Gory Details
 

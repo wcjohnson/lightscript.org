@@ -26,9 +26,9 @@ styles = {
 Hero() ->
   <div className="py-4 mt-n1 hero">
     <center className="pt-7 pb-3">
-      <h1 style={styles.heroTitle}>LightScript</h1>
+      <h1 style={styles.heroTitle}>@oigroup/LightScript</h1>
       <h3 className="pt-2" style={styles.heroSubtitle}>
-        A Concise Syntax for JavaScript
+        A futuristic branch of the <a href="https://lightscript.org">LightScript</a> language
       </h3>
     </center>
 
@@ -37,10 +37,10 @@ Hero() ->
         <Col sm={8}>
           <center>
             <p className="lead pt-4">
-              A close superset of ES7 with JSX and Flow, built with Babel.
+              The amazing LightScript core language, with a bunch of extra fixes, features, tools, and docs.
             </p>
             <p className="lead pb-6">
-              Designed to make programmers a little more productive.
+              Designed to make programmers considerably more productive!
             </p>
           </center>
         </Col>
@@ -156,8 +156,6 @@ WhyLightScript() =>
       Interoperability with JavaScript is at the core of the language;
       it is implemented as a fork of Babel's parser, and functions as a
       superset of ES7 with minimal backwards-incompatibilities.
-      Every LightScript language feature strives for a clear 1:1 mapping
-      to JavaScript code you might have written yourself.
     </p>
   </HomepageSection>
 
@@ -166,52 +164,50 @@ Installation() =>
     <h3>Installation & Usage</h3>
 
     <p>
-      For all ES7 features (including <code>import</code>) and runtime typechecks, use the preset:
+      Install the Babel preset:
     </p>
     <h4>
-      <code>$ npm install babel-preset-lightscript</code>
+      <code>$ npm install @oigroup/babel-preset-lightscript</code>
     </h4>
 
     <p>
-      If you just want the core language, use the plugin:
-    </p>
-    <p>
-      <code>$ npm install babel-plugin-lightscript</code>
-    </p>
-    <p>
-      ...and add to your <code>.babelrc</code>.
+      Add to <code>.babelrc</code>:
     </p>
 
     <p>
-      The LightScript plugin currently only processes files
-      with <code>.lsc</code> or <code>.lsx</code> in the filename.
-      You can use <code>.lsc.js</code> and similar if you like.
+      <pre><code>
+{`
+{
+  "presets": [
+    [
+      "@oigroup/babel-preset-lightscript",
+      {
+        "env": { "targets": { "ie": 10 } }
+      }
+    ]
+  ]
+}`}
+      </code></pre>
     </p>
 
-    <h4>
-      Example usage:
-    </h4>
     <p>
-      <code>$ babel --presets lightscript -x .lsc</code>
-    </p>
-    <p>
-      Or, if you have added <code>{'{'}"presets": ["lightscript"]}</code> to
-      your <code>.babelrc</code>:
+      When the preset is enabled, LightScript will automatically process files with
+      <code>.lsc</code> or <code>.lsx</code> in the filename. Once <code>.babelrc</code> is set up, just run:
     </p>
     <p>
       <code>$ babel -x .lsc</code>
     </p>
     <p>
-      If you're using webpack, loaders work as expected:
+      If you're using webpack, add the preset to your babel-loader:
     </p>
     <p>
-      <code>{`
-        test: /\.(lsc|jsx?)/,
-        loader: 'babel-loader',
-        query: {
-          presets: ['lightscript']
-        }
-      `}</code>
+      <pre><code>{`
+test: /\.(lsc|jsx?)/,
+loader: 'babel-loader',
+query: {
+  presets: ['@oigroup/babel-preset-lightscript']
+}
+      `}</code></pre>
     </p>
   </HomepageSection>
 
@@ -219,48 +215,26 @@ ProjectStatus() =>
   <HomepageSection>
     <h3>Project Status</h3>
     <p>
-      <em>(as of March 2017)</em>
+      <em>(Oct 2017, @wcjohnson)</em>
     </p>
     <p>
-      LightScript is ready to be used as alpha software.
-      The language itself is "mostly done", with a few nice-to-have features
-      not yet built but a solid core complete.
+      @oigroup/lightscript should be considered beta-quality software. I personally use
+      LightScript in every new project where I have a say, including several
+      applications deployed in production; however, I have certainly run into
+      and fixed the occasional bug along the way.
     </p>
     <p>
-      Tooling is immature, though there is hacky syntax highlighting for
-      {' '}
-      <a href="https://atom.io/packages/lightscript-atom" target="_blank">
-        Atom
-      </a>
-      {' '}and{' '}
-      <a href="https://github.com/lightscript/lightscript-sublime" target="_blank">
-        Sublime
-      </a>. Prorities include:
-      more and better syntax highlighters;{' '}
-      <a href="https://github.com/prettier/prettier" target="_blank">
-        prettier
-      </a>-based auto-formatting;
-      js-to-lightscript compilation;
-      a standalone `lightscript` CLI;
-      eslint support;
-      and integration with the Flow typechecker.
+      See the <a href="#">Tooling</a> section of the docs for more information
+      on the tooling ecosystem. As of right now, @oigroup/lightscript has working
+      (though immature) linting, code coverage, and syntax highlighting.
     </p>
     <p>
-      Better documentation (particuarly guides and feature explanations)
-      is also a high priority. For now,
-      the <a href="https://github.com/lightscript/lightscript.org">
-        source code for this website
-      </a> is the best example of LightScript code in the wild.
-    </p>
-    <p>
-      I'm currently feeling out whether this project will be popular
-      and impactful enough to be worth heavily investing in (there's a lot to do).
-      There will be no backwards-compatibility
-      guarantees until the project hits v1.0 (at least a year)
-      and it may be shelved entirely.
-    </p>
-    <p>
-      Please don't rely on LightScript for Serious Production Stuff yet.
+      There are several good examples of LightScript in the wild:
+      <ul>
+        <li>The <a href="https://github.com/wcjohnson/babel-plugin-lightscript/tree/oigroup/src">@oigroup/lightscript Babel transformations</a> are self-hosting and written in LightScript. I make it a point to flex all the features of the language within the compiler, so it's a good place to look for complex examples.</li>
+        <li><a href="https://wcjohnson.github.io/lscdiag/">lscdiag</a>, a LightScript repl and diagnostic tool, is <a href="https://github.com/wcjohnson/lscdiag/tree/master/src">written in LightScript</a>. It was designed using tech from the forefront of the React ecosystem, such as Redux and Recompose, and is a good example of using LightScript to build an idiomatic React application of moderate complexity.
+        </li>
+      </ul>
     </p>
   </HomepageSection>
 
@@ -283,21 +257,9 @@ CompletedFeatures() =>
       <li>Commaless Objects and Arrays</li>
       <li>Automatic Semicolon Insertion that always works</li>
       <li>Array & Object for-loops</li>
-      <li>Array & Object Comprehensions</li>
-
-      <li>several others</li>
+      <li>Spread for-loops</li>
+      <li>Pattern Matching</li>
     </ul>
-
-    <p>
-      Tests for all features can be seen{' '}
-      <a href="https://github.com/lightscript/babylon-lightscript/tree/lightscript/test/fixtures/lightscript">
-        here
-      </a>
-      {' '}and{' '}
-      <a href="https://github.com/lightscript/babel-plugin-lightscript/tree/master/test/fixtures">
-        here
-      </a>.
-    </p>
   </HomepageSection>
 
 export default () =>

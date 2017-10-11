@@ -49,7 +49,7 @@
     "test": "npm run lint",
     "develop": "gatsby develop",
     "start": "gatsby develop",
-    "build": "rm -rf docs && gatsby build && mv public docs && cp CNAME docs",
+    "build": "rm -rf public && gatsby build --prefix-links",
     "preversion": "npm run build && git add -A",
     "serve": "./node_modules/.bin/serve docs",
     "lint": "./node_modules/.bin/eslint . --ext .lsc"

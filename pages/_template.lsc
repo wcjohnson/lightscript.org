@@ -33,7 +33,7 @@ TopNavBar({ location }) ->
         <NavLink to={prefixLink('/docs/')} isActive={docsActive}>
           Documentation
         </NavLink>
-        <NavLink href="https://github.com/lightscript/lightscript">
+        <NavLink href="https://github.com/wcjohnson/lightscript">
           Github
         </NavLink>
       </Col>
