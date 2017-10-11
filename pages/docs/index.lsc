@@ -52,6 +52,14 @@ class Docs extends React.Component:
     activeSections.delete(sectionId)
     this.setState({ activeSections })
 
+  componentDidMount(): void ->
+    hash = location.hash.replace('#', '')
+    if hash != '':
+      elt = document.getElementById(hash)
+      if elt:
+        offset = elt.offsetTop
+        setTimeout(-> window.scrollTo(0, offset), 0)
+
   render() ->
     <Container className="py-5">
       <StickyContainer>

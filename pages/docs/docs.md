@@ -2,11 +2,16 @@
 
 ## Foreword
 
-> The information in this document applies to version 3.0.0-alpha.7 of the compiler.
+> The information in this document applies to version 3.0.0-beta.0 of the compiler.
+
 
 > `@oigroup/lightscript` adheres to semver regarding language syntax and
 > semantics -- the same major compiler version should compile the same source
 > to the same output, barring bug fixes and optimizations.
+
+
+> Feel free to open an issue at https://github.com/wcjohnson/lightscript/issues
+> if you encounter a problem with LightScript.
 
 ## Variables & Assignment
 
@@ -1303,6 +1308,89 @@ isOver100 = twoHundred
 ```
 
 More details about ASI are in [the gory details](#), which we hope you'll never need to consult.
+
+## Tooling
+
+### Syntax Highlighting
+
+- Sublime Text:
+
+    Install `LightScript` through Package Control.
+
+- Atom:
+
+    https://atom.io/packages/lightscript-atom
+
+- VS Code:
+
+    Install the `lightscript-syntax` extension:
+    https://marketplace.visualstudio.com/items?itemName=lightscript.lsc
+
+    You probably also want the `Babel ES6/ES7` extension which extends syntax highlighting to elements like JSX and Flow types:
+    https://marketplace.visualstudio.com/items?itemName=dzannotti.vscode-babel-coloring
+
+- GitHub:
+
+    GitHub does not directly support LightScript syntax, but you can override with JavaScript highlighting, which works reasonably well. Add a `.gitattributes` to the root of your repo with the following content:
+    ```text
+    *.lsc linguist-language=javascript
+    ```
+
+### Linting
+
+Linting for LightScript is implemented as an extension for the ESLint linter. First install the `@oigroup/lightscript-eslint` extension:
+
+```sh
+$ npm install --save-dev @oigroup/lightscript-eslint
+```
+
+Then configure the `.eslintrc` in the root of your project to use `@oigroup/lightscript-eslint` as the parser:
+
+```json
+// .eslintrc
+{
+  "parser": "@oigroup/lightscript-eslint",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "extends": "eslint:recommended"
+}
+```
+
+Then lint your code:
+
+```sh
+$ eslint --ext .js,.lsc src
+```
+
+Once you have linting set up in your project, you can add live linting and error checking to Visual Studio Code by installing the `ESLint` extension: https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint
+
+Similar live linting extensions for Atom and Sublime Text should work as well, as long as they are able to read `.eslintrc` from a local folder.
+
+#### Linting with React
+
+If you're coding with React and JSX, you will need to install `eslint-plugin-react` and add it to your `.eslintrc`:
+
+```json
+// .eslintrc
+{
+  "parser": "@oigroup/lightscript-eslint",
+  "parserOptions": {
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:react/recommended"
+  ]
+}
+```
+
+> The ESLint linter extension is still a bit immature. If you encounter any
+> issues with linting, such as broken rules and crashes, feel free to open
+> an issue at https://github.com/wcjohnson/lightscript/issues
 
 ## Porting from JavaScript
 

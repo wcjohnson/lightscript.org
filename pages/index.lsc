@@ -224,7 +224,7 @@ ProjectStatus() =>
       and fixed the occasional bug along the way.
     </p>
     <p>
-      See the <a href="#">Tooling</a> section of the docs for more information
+      See the <a href="docs/#tooling">Tooling</a> section of the docs for more information
       on the tooling ecosystem. As of right now, @oigroup/lightscript has working
       (though immature) linting, code coverage, and syntax highlighting.
     </p>
