@@ -669,25 +669,29 @@ Arguments can be on one line, separated by commas:
       arg2
       arg3
 
-> Since they omit so much punctuation, bang calls are particularly sensitive to
-> whitespace. If a bang call is split across multiple lines, all arguments must
-> occur at the same indent level as the first:
-> ```
-> f!
->   arg1
->   arg2
->     arg3 // nope!
-> ```
-> Subscripts (dots, brackets, and chained calls) that are aligned with
-> the arguments of the bang call will adhere to the bang call. Deeper subscripts
-> will adhere to the arguments.
-> ```
-> allAboard!
->   theExpress!
->     .train
->   to
->   .crazyTown!
-> ```
+Since they omit so much punctuation, bang calls are particularly sensitive to
+whitespace. If a bang call is split across multiple lines, all arguments must
+occur at the same indent level as the first:
+
+    f!
+    arg1
+    arg2
+        arg3 // nope!
+
+Subscripts (dots, brackets, and chained calls) that are aligned with
+the arguments of the bang call will adhere to the bang call. Deeper subscripts
+will adhere to the arguments.
+
+    allAboard!
+      theExpress!
+        .train
+      to
+      .crazyTown!
+
+Arguments must be separated from the `!` by whitespace. Anything not separated by whitespace will be interpreted as a subscript:
+
+    callWithArray! [1]
+    callThenIndexResult![1]
 
 
 ## Objects
@@ -958,6 +962,19 @@ object:
 <!-- -->
     mapObject(obj, f) ->
       { ...for key k, val v in obj: f(k, v) }
+
+### JSX
+
+Using a spread loop in a JSX `{ }`-delimited expression creates an array of JSX items, one for each time the loop reaches a terminal expression:
+
+    <Items>
+      { ...for idx i, elem item in items:
+          if item.isInStock:
+            <Item key={i} item={item} />
+      }
+    </Items>
+
+Note that this is different than an array spread; you are not required to wrap terminal items in `[ ]` and multiple items cannot be created per iteraton.
 
 ### Elision
 
@@ -1363,9 +1380,20 @@ Then lint your code:
 $ eslint --ext .js,.lsc src
 ```
 
-Once you have linting set up in your project, you can add live linting and error checking to Visual Studio Code by installing the `ESLint` extension: https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint
+#### Live Linting
 
-Similar live linting extensions for Atom and Sublime Text should work as well, as long as they are able to read `.eslintrc` from a local folder.
+##### Visual Studio Code
+
+- Set up eslint for your project as above. Verify that eslint lints correctly from the CLI.
+- Install the `ESLint` extension for VSCode: https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint
+- Tell VSCode to live-lint LightScript files by adding the following entry to your VSCode options (workspace or global):
+  ```
+  "eslint.validate": ["javascript", "javascriptreact", "lightscript"]
+  ```
+
+##### Others
+
+Only Visual Studio Code has been extensively tested at the time of this writing, however, live linting extensions for Atom and Sublime Text should work as well, as long as they are able to use local versions of `eslint`.
 
 #### Linting with React
 
@@ -1835,16 +1863,16 @@ You are unlikely to hit them and there are easy fixes.
 #### Colons, Arrow, and Flow Types
 
 If you have an `if` whose test is a function call,
-and whose consequent is an arrow function without parentheses or curly braces, eg;
-
-    if fn(): x => 4
-
-it will parse as a function `fn() => 4` with type annotation `x`,
-and then throw a SyntaxError: `Unexpected token, expected :`.
-
-This can be corrected by wrapping the param in parens:
+and whose consequent is an anonymous arrow function, eg;
 
     if fn(): (x) => 4
+
+it will parse as a function `fn() => 4` with Flow return type annotation `x`,
+and then throw a SyntaxError: `Unexpected token, expected :`.
+
+This can be corrected by wrapping the `if` test in parens:
+
+    if (fn()): (x) => 4
 
 
 ### Blocks and Objects
