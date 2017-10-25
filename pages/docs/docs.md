@@ -2,12 +2,15 @@
 
 ## Foreword
 
-> The information in this document applies to version 3.0.0-beta.0 of the compiler.
+> The information in this document applies to version 3.0.0 of the compiler.
 
 
 > `@oigroup/lightscript` adheres to semver regarding language syntax and
 > semantics -- the same major compiler version should compile the same source
 > to the same output, barring bug fixes and optimizations.
+
+
+> Come hang out with us on Gitter: https://gitter.im/lightscript/Lobby
 
 
 > Feel free to open an issue at https://github.com/wcjohnson/lightscript/issues
@@ -941,6 +944,12 @@ The same is true with spread loops; the expression at the end of the spread loop
 will be unwrapped and pushed to the array. In a typical case, this just means
 wrapping the element you want to push with `[ ]`:
 
+    input = [1, 2, 3]
+    output = [ ...for elem e in input: [ e + 1 ] ]
+    // this is equivalent to [...[1], ...[2], ...[3]]
+    // so output deepEquals [1, 2, 3]
+
+    // an implementation of Array.prototype.map:
     myMap(arr, f) ->
       [ ...for elem e in arr: [ f(e) ] ]
 
@@ -949,7 +958,8 @@ multiple elements of the output array:
 
     input = [1, 2, 3]
     output = [ ...for elem e in input: [e, e+1] ]
-    // output deepEquals [1, 2, 2, 3, 3, 4]
+    // this is equivalent to [ ...[1, 2], ...[2, 3], ...[3, 4] ]
+    // so output deepEquals [1, 2, 2, 3, 3, 4]
 
 ### Objects
 

@@ -16,9 +16,9 @@ class List extends React.Component:
 
   activateItem(itemId): void =>
     if this.state.activeItem == itemId:
-      this.setState({ activeItem: null })
+      this.setState! { activeItem: null }
     else:
-      this.setState({ activeItem: itemId })
+      this.setState! { activeItem: itemId }
 
 
   render() ->
@@ -33,7 +33,7 @@ class List extends React.Component:
       }
 
       <ul>
-        {items.map((item, i) =>
+        { ...for idx i, elem item in items:
           isActive = activeItem == item.id
 
           if not item.hidden:
@@ -43,6 +43,6 @@ class List extends React.Component:
               isActive={isActive}
               onClick={() => this.activateItem(item.id)}
             />
-        )}
+        }
       </ul>
     </div>
